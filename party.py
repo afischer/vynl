@@ -160,7 +160,7 @@ class Party:
             ret=[]
             conn=sqlite3.connect(self.db)
             c=conn.cursor()
-            it=c.execute("SELECT name,artist,videoid,imgURL, upvotes, downvotes,upvoteip,downvoteip FROM "+self.k+" WHERE played=0 ORDER BY total DESC").fetchall()
+            it=c.execute("SELECT name,artist,videoid,imgURL, upvotes, downvotes,upvoteip,downvoteip FROM "+self.k+" WHERE played=0 AND playing=0 ORDER BY total DESC").fetchall()
             conn.close()
             for x in it:
                 ret.append({"songname":x[0],"songartist":x[1],"songID":str(x[2]),"albumarturl":str(x[3]),"upvotes":x[4],"downvotes":x[5],"upvoted":(ip in m.loads(x[6])), "downvoted":(ip in m.loads(x[7]))})
