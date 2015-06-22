@@ -133,12 +133,19 @@ function showSong() {
 
 function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.PLAYING) {
+        $('.play').removeClass("glyphicon-play").addClass("glyphicon-pause");
+        $('.play').attr("onclick", "pauseVideo()");
         if (!paused) {
             showSong();
             vynl.sockets.playingSong(data.models[0], ipAddress);
             vynl.sockets.deleteSong({songID: data.models[playIndex].attributes.songID}, ipAddress);
         }
         paused = false;
+
+    }
+    if (event.data === YT.PlayerState.PAUSED){
+        $('.play').removeClass("glyphicon-pause").addClass("glyphicon-play");
+        $('.play').attr("onclick", "playVideo()");
     }
 
 
