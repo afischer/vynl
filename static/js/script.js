@@ -1,3 +1,5 @@
+var typingTimer;                //timer identifier
+var doneTypingInterval = 250;
 
 function handleClientLoad() {
     gapi.client.setApiKey(apiKey);
@@ -73,16 +75,32 @@ var SearchSongDynamic = React.createClass({
 	},
     handleOnChange: function(event) {
         this.setState({value: event.target.value});
-
-        var query = event.target.value;
-
-        if (query != null && query != '') {
-            search(query, function(response) {
-                console.log(response.items);
-                this.setState({songs: response.items});
-            }.bind(this));
-            $(React.findDOMNode(this.refs.searchSongDropDown)).show();
+        function doThang(that,query) {
+            if (query) {
+                search(query, function(response) {
+                    console.log(response.items);
+                    that.setState({songs: response.items});
+                }.bind(that));
+                $(React.findDOMNode(that.refs.searchSongDropDown)).show();
+            }
         }
+        function delay(that,q){
+            //console.log("we made it");
+            clearTimeout(typingTimer);
+            if ($("#search_input").val) {
+                console.log("we're in");
+                function what(){
+                    return doThang(that,q);
+                }
+                //console.log(doThang);
+                //console.log(what);
+                typingTimer = setTimeout(what, doneTypingInterval);
+            }
+        }
+        var query = event.target.value;
+        $("#search_input").keyup(delay(this,query));
+
+
     },
     render: function() {
         var value = this.state.value;
