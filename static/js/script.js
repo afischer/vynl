@@ -88,7 +88,7 @@ var SearchSongDynamic = React.createClass({
             //console.log("we made it");
             clearTimeout(typingTimer);
             if ($("#search_input").val) {
-                console.log("we're in");
+                //console.log("we're in");
                 function what(){
                     return doThang(that,q);
                 }
