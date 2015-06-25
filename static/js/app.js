@@ -1,3 +1,4 @@
+var newvid=true;
 function getArt(ytID){
     return "".concat('<img class="album-art img-responsive img-rounded" src="http://img.youtube.com/vi/', ytID, '/0.jpg">');
 }
@@ -135,12 +136,12 @@ function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.PLAYING) {
         $('.play').removeClass("glyphicon-play").addClass("glyphicon-pause");
         $('.play').attr("onclick", "pauseVideo()");
-        if (!paused) {
+        if (newvid) {
             showSong();
             vynl.sockets.playingSong(data.models[0], ipAddress);
             vynl.sockets.deleteSong({songID: data.models[playIndex].attributes.songID}, ipAddress);
+            newvid=false;
         }
-        paused = false;
 
     }
     if (event.data === YT.PlayerState.PAUSED){
@@ -151,6 +152,8 @@ function onPlayerStateChange(event) {
 
     if (event.data == YT.PlayerState.ENDED){
         nextVideo();
+        newvid=true;
+        //console.log("shootme");
     }
 
 };
@@ -178,6 +181,7 @@ function nextVideo(){
     } else {
         console.warn("can't call nextVideo: end of queue");
     }
+    newvid=true;
 };
 
 function prevVideo(){
