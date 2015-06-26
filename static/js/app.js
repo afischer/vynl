@@ -257,7 +257,7 @@ $(document).ready(function() {
         $(".now-playing-song-name").html(song.song.songname);
         $(".song-artist").html(song.song.songartist);
         var albumart = "".concat('<img class="album-art img-responsive img-rounded" src="http://img.youtube.com/vi/', song.song.songID, '/0.jpg">');
-         $(".album-art").html(albumart);
+        $(".album-art").html(albumart);
     });
 
     var handleClick = function(e) {
