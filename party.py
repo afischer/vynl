@@ -57,9 +57,10 @@ class Party:
             try:
                 c.execute("INSERT INTO "+self.k+ "(videoid,imgURL,name,artist,upvotes,downvotes,total,upvoteip,downvoteip,played, playing) VALUES (?,?,?,?,0,0,0,?,?,0,0)",args)
             except:
-                L=c.execute("SELECT * FROM " + self.k + " WHERE videoid=? AND played=1",(self.k,)).fetchall()
+                L=c.execute("SELECT * FROM " + self.k + " WHERE videoid=? AND (played=1 OR playing=1) ",(vid,)).fetchall()
                 if len(L)==0:
                     conn.close()
+                    print "in queue!"
                     return "The song is already in the queue!"
                 c.execute("REPLACE INTO "+self.k+ "(videoid,imgURL,name,artist,upvotes,downvotes,total,upvoteip,downvoteip,played,playing) VALUES (?,?,?,?,0,0,0,?,?,0,0)",args)
             conn.commit()
@@ -189,6 +190,7 @@ class Party:
 
     def playSong(self,vid):
         if self.active:
+            print "playtime!"
             x=time.time()
             conn=sqlite3.connect(self.db)
             c=conn.cursor()
