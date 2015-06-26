@@ -1,4 +1,4 @@
-var newvid=true;
+
 function getArt(ytID){
     return "".concat('<img class="album-art img-responsive img-rounded" src="http://img.youtube.com/vi/', ytID, '/0.jpg">');
 }
@@ -101,6 +101,7 @@ var player;
 var playIndex;
 var videoData;
 var paused = false;
+var newvid=true;
 
 
 
@@ -138,8 +139,10 @@ function onPlayerStateChange(event) {
         $('.play').attr("onclick", "pauseVideo()");
         if (newvid) {
             showSong();
-            vynl.sockets.playingSong(data.models[0], ipAddress);
-            vynl.sockets.deleteSong({songID: data.models[playIndex].attributes.songID}, ipAddress);
+            //vynl.sockets.playingSong(data.models[0], ipAddress);
+            //console.log(data.models[0]);
+            console.log(data.models[playIndex].attributes.songID);
+            vynl.sockets.playSong({songID: data.models[playIndex].attributes.songID});
             newvid=false;
         }
 
@@ -180,6 +183,8 @@ function nextVideo(){
         player.loadVideoById(data.models[playIndex].attributes.songID);
     } else {
         console.warn("can't call nextVideo: end of queue");
+        $('.play').removeClass("glyphicon-pause").addClass("glyphicon-play");
+        $('.play').attr("onclick", "playVideo()");
     }
     newvid=true;
 };
@@ -226,6 +231,13 @@ $(document).ready(function() {
         for (i = 0; i < songs.songs.length; i++) {
             data.push(songs.songs[i]);
         }
+        console.log(songs.song);
+        if (songs.song){
+            $(".now-playing-song-name").html(songs.song.songname);
+            $(".song-artist").html(songs.song.songartist);
+            var albumart = "".concat('<img class="album-art img-responsive img-rounded" src="http://img.youtube.com/vi/', songs.song.songID, '/0.jpg">');
+            $(".album-art").html(albumart);
+        }
     });
 
     vynl.sockets.socket.on('updateSongs', function(songs) {
@@ -236,6 +248,12 @@ $(document).ready(function() {
             console.log(songs.songs[i]["songname"]);
             songs.songs[i]["songartist"]=decodeURIComponent(songs.songs[i]["songartist"]);
             data.push(songs.songs[i]);
+        }
+        if (songs.song){
+            $(".now-playing-song-name").html(songs.song.songname);
+            $(".song-artist").html(songs.song.songartist);
+            var albumart = "".concat('<img class="album-art img-responsive img-rounded" src="http://img.youtube.com/vi/', songs.song.songID, '/0.jpg">');
+            $(".album-art").html(albumart);
         }
     });
 
