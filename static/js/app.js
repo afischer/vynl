@@ -139,7 +139,7 @@ function onPlayerStateChange(event) {
         $('.play').attr("onclick", "pauseVideo()");
         if (newvid) {
             showSong();
-            //vynl.sockets.playingSong(data.models[0], ipAddress);
+            vynl.sockets.playingSong(data.models[0], ipAddress);
             //console.log(data.models[0]);
             console.log(data.models[playIndex].attributes.songID);
             vynl.sockets.playSong({songID: data.models[playIndex].attributes.songID});
