@@ -162,7 +162,7 @@ def addSong(data):
     newParty = p.Party(partyID)
     print "adding song: ", song, " to room: " + partyID
     newParty.addSong(song["songID"], song["albumarturl"], song["songname"], song["songartist"])
-    print newParty.getOrdered(newParty.getDJ())
+    #print newParty.getOrdered(newParty.getDJ())
     emit('notifySongUpdate', {"data": True}, room=partyID)
 
 

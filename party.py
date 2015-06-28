@@ -18,7 +18,7 @@ def scrub(query):
 class Party:
     # Adds unique key to uniques database and creates a database with a name
     def __init__(self, key, dj=0):
-        self.k = scrub(key)
+        self.k = key #scrub(key)
         #print self.k
         self.db = 'parties.db'
         conn = sqlite3.connect('parties.db')
@@ -38,7 +38,7 @@ class Party:
         #print "why"
         #conn2=sqlite3.connect(self.db)
         #c2=conn2.cursor()
-        c.execute("CREATE TABLE IF NOT EXISTS songs (videoid TEXT PRIMARY KEY, imgURL TEXT, upvotes REAL, downvotes REAL, name TEXT, artist TEXT, total REAL, upvoteip BLOB, downvoteip BLOB, timestamp REAL,played INTEGER, party TEXT)")
+        c.execute("CREATE TABLE IF NOT EXISTS songs (videoid TEXT, imgURL TEXT, upvotes REAL, downvotes REAL, name TEXT, artist TEXT, total REAL, upvoteip BLOB, downvoteip BLOB, timestamp REAL,played INTEGER, party TEXT)")
         conn.commit()
         self.addDJ(dj)
         c.execute("INSERT OR REPLACE INTO uniques (url) VALUES (?)", (self.k,))
@@ -167,6 +167,7 @@ class Party:
             conn=sqlite3.connect(self.db)
             c=conn.cursor()
             it=c.execute("SELECT name,artist,videoid,imgURL, upvotes, downvotes,upvoteip,downvoteip FROM songs WHERE played=0 AND party=? ORDER BY total DESC",(self.k,)).fetchall()
+            #print c.execute("SELECT party FROM songs").fetchall()
             conn.close()
             for x in it:
                 ret.append({"songname":x[0],"songartist":x[1],"songID":str(x[2]),"albumarturl":str(x[3]),"upvotes":x[4],"downvotes":x[5],"upvoted":(ip in m.loads(x[6])), "downvoted":(ip in m.loads(x[7]))})
@@ -202,14 +203,13 @@ class Party:
             try:
                 c.execute("UPDATE playing SET played=1 WHERE party=?",(self.k,))
             except:
-                c.execute("CREATE TABLE playing (videoid TEXT PRIMARY KEY, imgURL TEXT, upvotes REAL, downvotes REAL, name TEXT, artist TEXT, total REAL, upvoteip BLOB, downvoteip BLOB, timestamp REAL,played INTEGER, party TEXT)")
-                c.execute("UPDATE playing SET played=1 WHERE party=?",(self.k,))
-            try:
-                c.execute("INSERT INTO songs SELECT * FROM playing WHERE party=?",(self.k,))
-                #print "yep"
-            except Exception as e:
-                #raise e
-                pass
+                c.execute("CREATE TABLE playing (videoid TEXT, imgURL TEXT, upvotes REAL, downvotes REAL, name TEXT, artist TEXT, total REAL, upvoteip BLOB, downvoteip BLOB, timestamp REAL,played INTEGER, party TEXT)")
+            z=c.execute("SELECT videoid FROM playing WHERE party=?",(self.k,)).fetchall()
+            if len(z)==1:
+                z=z[0][0]
+                final=len(c.execute("SELECT * FROM songs WHERE videoid=? AND party=?",(z,self.k,)).fetchall()) == 0
+                if final:
+                    c.execute("INSERT INTO songs SELECT * FROM playing WHERE party=?",(self.k,))
             c.execute("DELETE FROM playing WHERE party=?",(self.k,))
             c.execute("INSERT INTO playing SELECT * FROM songs WHERE videoid=? AND party=?",(vid,self.k,))
             c.execute("DELETE FROM songs WHERE videoid=? AND party=?",(vid,self.k,))
@@ -246,14 +246,18 @@ class Party:
 
     def getPlaying(self):
         if self.active:
-            ret=[]
-            conn=sqlite3.connect(self.db)
-            c=conn.cursor()
-            it=c.execute("SELECT name,artist,videoid,imgURL FROM playing WHERE party=?",(self.k,)).fetchall()
-            conn.close()
-            for x in it:
-                #print x[0]
-                ret.append({"songname":x[0],"songartist":x[1],"songID":str(x[2]),"albumarturl":str(x[3])})
-            return ret
+            try:
+                ret=[]
+                conn=sqlite3.connect(self.db)
+                c=conn.cursor()
+                it=c.execute("SELECT name,artist,videoid,imgURL FROM playing WHERE party=?",(self.k,)).fetchall()
+                conn.close()
+                for x in it:
+                    #print x[0]
+                    ret.append({"songname":x[0],"songartist":x[1],"songID":str(x[2]),"albumarturl":str(x[3])})
+                return ret
+            except Exception as e:
+                raise e
+                return []
         else:
             return "Party not active."
