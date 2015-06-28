@@ -11,7 +11,6 @@
 |---------------------------------------|:--------------:|:--------------------------------------------:|:------------------------------:|
 | ![EC](http://i.imgur.com/NY22s6r.png) | Eric Z. Chen   |[`@ezchen`](https://github.com/ezchen)        | Frontend Javascript, API mgmt  |
 | ![AF](http://i.imgur.com/a150nV8.png) | Andrew Fischer |[`@afischer`](https://github.com/afischer)    | Frontend Javascript, MVC mgmt  |
-| ![IG](http://i.imgur.com/d5Kksg4.png) | Isaac Gluck    |[`@IsaacGluck`](https://github.com/IsaacGluck)| Frontend HTML/CSS, Wireframing |
 | ![DZ](http://i.imgur.com/f8pAznc.png) | Daniel Zabari  |[`@Zabari`](https://github.com/Zabari)        | Backend Python, Database Mgmt  |
 
 ## Timetable
