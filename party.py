@@ -38,7 +38,7 @@ class Party:
         #print "why"
         #conn2=sqlite3.connect(self.db)
         #c2=conn2.cursor()
-        c.execute("CREATE TABLE " + self.k +"(videoid TEXT PRIMARY KEY, imgURL TEXT, upvotes REAL, downvotes REAL, name TEXT, artist TEXT, total REAL, upvoteip BLOB, downvoteip BLOB, timestamp REAL,played INTEGER, playing INTEGER)")
+        c.execute("CREATE TABLE IF NOT EXISTS songs (videoid TEXT PRIMARY KEY, imgURL TEXT, upvotes REAL, downvotes REAL, name TEXT, artist TEXT, total REAL, upvoteip BLOB, downvoteip BLOB, timestamp REAL,played INTEGER, party TEXT)")
         conn.commit()
         self.addDJ(dj)
         c.execute("INSERT OR REPLACE INTO uniques (url) VALUES (?)", (self.k,))
@@ -46,23 +46,26 @@ class Party:
         conn.close()
         self.dj=dj
         self.active=True
+        #print "here"
 
     def addSong(self,vid,imgURL,title,artist):
         if self.active:
+            #print "adding"
             conn=sqlite3.connect(self.db)
             x=m.dumps([])
             y=m.dumps([])
-            args=(vid,imgURL,title,artist,x,y,)
+            args=(vid,imgURL,title,artist,x,y,self.k,)
             c=conn.cursor()
             try:
-                c.execute("INSERT INTO "+self.k+ "(videoid,imgURL,name,artist,upvotes,downvotes,total,upvoteip,downvoteip,played, playing) VALUES (?,?,?,?,0,0,0,?,?,0,0)",args)
-            except:
-                L=c.execute("SELECT * FROM " + self.k + " WHERE videoid=? AND (played=1 OR playing=1) ",(vid,)).fetchall()
+                c.execute("INSERT INTO songs (videoid,imgURL,name,artist,upvotes,downvotes,total,upvoteip,downvoteip,played,party) VALUES (?,?,?,?,0,0,0,?,?,0,?)",args)
+            except Exception as e:
+                #raise e
+                L=c.execute("SELECT * FROM songs WHERE videoid=? AND played=1 AND party=? ",(vid,self.k,)).fetchall()
                 if len(L)==0:
                     conn.close()
-                    print "in queue!"
+                    #print "in queue!"
                     return "The song is already in the queue!"
-                c.execute("REPLACE INTO "+self.k+ "(videoid,imgURL,name,artist,upvotes,downvotes,total,upvoteip,downvoteip,played,playing) VALUES (?,?,?,?,0,0,0,?,?,0,0)",args)
+                c.execute("REPLACE INTO songs (videoid,imgURL,name,artist,upvotes,downvotes,total,upvoteip,downvoteip,played,party) VALUES (?,?,?,?,0,0,0,?,?,0,?)",args)
             conn.commit()
             conn.close()
         else:
@@ -72,7 +75,7 @@ class Party:
         if self.active:
             conn=sqlite3.connect(self.db)
             c=conn.cursor()
-            c.execute("DELETE FROM "+self.k+ " WHERE videoid=?",(vid,))
+            c.execute("DELETE FROM songs WHERE videoid=? AND party=?",(vid,self.k))
             conn.commit()
             conn.close()
         else:
@@ -82,7 +85,7 @@ class Party:
         if self.active:
             conn=sqlite3.connect(self.db)
             c=conn.cursor()
-            num=c.execute("SELECT upvotes,total,upvoteip, downvotes, downvoteip FROM "+self.k+" WHERE videoid=?",(vid,)).fetchone()
+            num=c.execute("SELECT upvotes,total,upvoteip, downvotes, downvoteip FROM songs WHERE videoid=? AND party=?",(vid,self.k,)).fetchone()
             x=m.loads(num[2])
             y=m.loads(num[4])
             if ip not in x:
@@ -91,15 +94,15 @@ class Party:
                     y.remove(ip)
                     x=m.dumps(x)
                     y=m.dumps(y)
-                    c.execute("UPDATE "+self.k+" SET upvotes=?, total=?, upvoteip=?, downvotes=?, downvoteip=? WHERE videoid=?",(num[0]+1,num[1]+2,x, num[3]-1,y,vid,))
+                    c.execute("UPDATE songs SET upvotes=?, total=?, upvoteip=?, downvotes=?, downvoteip=? WHERE videoid=? AND party=",(num[0]+1,num[1]+2,x, num[3]-1,y,vid,self.k,))
                 else:
                     x.append(ip)
                     x=m.dumps(x)
-                    c.execute("UPDATE "+self.k+" SET upvotes=?, total=?, upvoteip=? WHERE videoid=?",(num[0]+1,num[1]+1,x,vid,))
+                    c.execute("UPDATE songs SET upvotes=?, total=?, upvoteip=? WHERE videoid=? AND party=?",(num[0]+1,num[1]+1,x,vid,self.k,))
             elif ip in x:
                 x.remove(ip)
                 x=m.dumps(x)
-                c.execute("UPDATE "+self.k+" SET upvotes=?, total=?, upvoteip=? WHERE videoid=?",(num[0]-1,num[1]-1,x,vid,))
+                c.execute("UPDATE songs SET upvotes=?, total=?, upvoteip=? WHERE videoid=? AND party=?",(num[0]-1,num[1]-1,x,vid,self.k,))
 
             conn.commit()
             conn.close()
@@ -111,7 +114,7 @@ class Party:
         if self.active:
             conn=sqlite3.connect(self.db)
             c=conn.cursor()
-            num=c.execute("SELECT downvotes,total,downvoteip, upvotes, upvoteip FROM "+self.k+" WHERE videoid=?",(vid,)).fetchone()
+            num=c.execute("SELECT downvotes,total,downvoteip, upvotes, upvoteip FROM songs WHERE videoid=? AND party=?",(vid,self.k,)).fetchone()
             x=m.loads(num[2])
             y=m.loads(num[4])
             if ip not in x:
@@ -120,7 +123,7 @@ class Party:
                     y.remove(ip)
                     x=m.dumps(x)
                     y=m.dumps(y)
-                    c.execute("UPDATE "+self.k+" SET downvotes=?, total=?, downvoteip=?, upvotes=?, upvoteip=? WHERE videoid=?",(num[0]+1,num[1]-2,x, num[3]-1,y,vid,))
+                    c.execute("UPDATE songs SET downvotes=?, total=?, downvoteip=?, upvotes=?, upvoteip=? WHERE videoid=? AND party=?",(num[0]+1,num[1]-2,x, num[3]-1,y,vid,self.k,))
                     if (num[1]-2) <=-5:
                         conn.close()
                         self.removeSong(vid)
@@ -128,7 +131,7 @@ class Party:
                 else:
                     x.append(ip)
                     x=m.dumps(x)
-                    c.execute("UPDATE "+self.k+" SET downvotes=?, total=?, downvoteip=? WHERE videoid=?",(num[0]+1,num[1]-1,x,vid,))
+                    c.execute("UPDATE songs SET downvotes=?, total=?, downvoteip=? WHERE videoid=? AND party=?",(num[0]+1,num[1]-1,x,vid,self.k,))
                     if (num[1]-1)<=-5:
                         conn.close()
                         #print "gonna remove"
@@ -137,7 +140,7 @@ class Party:
             elif ip in x:
                 x.remove(ip)
                 x=m.dumps(x)
-                c.execute("UPDATE "+self.k+" SET downvotes=?, total=?, downvoteip=? WHERE videoid=?",(num[0]-1,num[1]+1,x,vid,))
+                c.execute("UPDATE songs SET downvotes=?, total=?, downvoteip=? WHERE videoid=? AND party=?",(num[0]-1,num[1]+1,x,vid,self.k,))
 
             conn.commit()
             conn.close()
@@ -151,7 +154,9 @@ class Party:
             conn = sqlite3.connect('parties.db')
             c=conn.cursor()
             c.execute("DELETE FROM uniques WHERE url=?",(self.k,))
-            c.execute("DROP TABLE "+self.k)
+            c.execute("DELETE FROM songs WHERE party=?",(self.k,))
+            if self.getPlaying():
+                c.execute("DELETE FROM playing WHERE party=?",(self.k,))
             conn.commit()
             conn.close()
 
@@ -161,7 +166,7 @@ class Party:
             ret=[]
             conn=sqlite3.connect(self.db)
             c=conn.cursor()
-            it=c.execute("SELECT name,artist,videoid,imgURL, upvotes, downvotes,upvoteip,downvoteip FROM "+self.k+" WHERE played=0 AND playing=0 ORDER BY total DESC").fetchall()
+            it=c.execute("SELECT name,artist,videoid,imgURL, upvotes, downvotes,upvoteip,downvoteip FROM songs WHERE played=0 AND party=? ORDER BY total DESC",(self.k,)).fetchall()
             conn.close()
             for x in it:
                 ret.append({"songname":x[0],"songartist":x[1],"songID":str(x[2]),"albumarturl":str(x[3]),"upvotes":x[4],"downvotes":x[5],"upvoted":(ip in m.loads(x[6])), "downvoted":(ip in m.loads(x[7]))})
@@ -190,13 +195,25 @@ class Party:
 
     def playSong(self,vid):
         if self.active:
-            print "playtime!"
+            #print "playtime!"
             x=time.time()
             conn=sqlite3.connect(self.db)
             c=conn.cursor()
-            c.execute("UPDATE  "+self.k+" SET playing=0, played=1 WHERE playing=1")
-            conn.commit()
-            c.execute("UPDATE  "+self.k+" SET timestamp=?, playing=1 WHERE videoid=?", (x,vid,))
+            try:
+                c.execute("UPDATE playing SET played=1 WHERE party=?",(self.k,))
+            except:
+                c.execute("CREATE TABLE playing (videoid TEXT PRIMARY KEY, imgURL TEXT, upvotes REAL, downvotes REAL, name TEXT, artist TEXT, total REAL, upvoteip BLOB, downvoteip BLOB, timestamp REAL,played INTEGER, party TEXT)")
+                c.execute("UPDATE playing SET played=1 WHERE party=?",(self.k,))
+            try:
+                c.execute("INSERT INTO songs SELECT * FROM playing WHERE party=?",(self.k,))
+                #print "yep"
+            except Exception as e:
+                #raise e
+                pass
+            c.execute("DELETE FROM playing WHERE party=?",(self.k,))
+            c.execute("INSERT INTO playing SELECT * FROM songs WHERE videoid=? AND party=?",(vid,self.k,))
+            c.execute("DELETE FROM songs WHERE videoid=? AND party=?",(vid,self.k,))
+            c.execute("UPDATE playing SET timestamp=? WHERE videoid=? AND party=?", (x,vid,self.k,))
             conn.commit()
             conn.close()
         else:
@@ -207,7 +224,7 @@ class Party:
             ret=[]
             conn=sqlite3.connect(self.db)
             c=conn.cursor()
-            it=c.execute("SELECT name,artist,videoid,imgURL FROM "+self.k+" WHERE played=1 ORDER BY timestamp ASC").fetchall()
+            it=c.execute("SELECT name,artist,videoid,imgURL FROM songs WHERE played=1 AND party=? ORDER BY timestamp ASC",(self.k,)).fetchall()
             conn.close()
             for x in it:
                 #print x[0]
@@ -232,7 +249,7 @@ class Party:
             ret=[]
             conn=sqlite3.connect(self.db)
             c=conn.cursor()
-            it=c.execute("SELECT name,artist,videoid,imgURL FROM "+self.k+" WHERE playing=1").fetchall()
+            it=c.execute("SELECT name,artist,videoid,imgURL FROM playing WHERE party=?",(self.k,)).fetchall()
             conn.close()
             for x in it:
                 #print x[0]
