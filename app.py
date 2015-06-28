@@ -137,9 +137,13 @@ def on_join(data):
     join_room(room)
     newParty = p.Party(room)
     dj = newParty.getDJ()
+    song= newParty.getPlaying()
+    if song:
+        song=song[0]
+    print "playing" , song
     print "joined room: " + room
     emit('join', {"songs": newParty.getOrdered(ipAddress),
-                  "dj": dj})
+                  "dj": dj ,"song":song})
 
 
 @socketio.on('leave', namespace='/party')
@@ -158,6 +162,7 @@ def addSong(data):
     newParty = p.Party(partyID)
     print "adding song: ", song, " to room: " + partyID
     newParty.addSong(song["songID"], song["albumarturl"], song["songname"], song["songartist"])
+    #print newParty.getOrdered(newParty.getDJ())
     emit('notifySongUpdate', {"data": True}, room=partyID)
 
 
@@ -168,8 +173,11 @@ def getSong(data):
     ipAddress = session['id']
     newParty = p.Party(partyID)
     thang=newParty.getOrdered(ipAddress)
-    print thang
-    emit('updateSongs', {"songs":thang })
+    song= newParty.getPlaying()
+    if song:
+        song=song[0]
+    print "ordered list:", thang
+    emit('updateSongs', {"songs":thang ,"song":song})
 
 
 @socketio.on('voteSong', namespace="/party")
@@ -204,12 +212,26 @@ def deleteSong(data):
         emit('error', {'data': "You are not the dj. You cannot Delete songs"});
 
 
-@socketio.on('playingSong', namespace="/party")
+@socketio.on('getPlaying', namespace="/party")
 def playingSong(data):
     partyID = data['room'].upper()
-    song = data['song']
+    newParty = p.Party(partyID)
+    song= newParty.getPlaying()
+    if song:
+        song=song[0]
     print "playing song: ", song, " in room: ", partyID
     emit('playingSong', {"song": song}, room=partyID)
+
+@socketio.on('playSong', namespace="/party")
+def playSong(data):
+    partyID = data['room'].upper()
+    song = data['song']
+    newParty = p.Party(partyID)
+    #print song
+    newParty.playSong(song["songID"])
+    #print newParty.getOrdered()
+    print "played song: ", song, " in room: ", partyID
+    emit('notifySongUpdate', {"data": True}, room=partyID)
 
 
 if __name__ == "__main__":
